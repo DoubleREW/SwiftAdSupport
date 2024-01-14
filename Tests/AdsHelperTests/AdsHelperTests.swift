@@ -1,7 +1,7 @@
 import XCTest
-@testable import AdSupport
+@testable import AdsHelper
 
-final class AdSupportTests: XCTestCase {
+final class AdsHelperTests: XCTestCase {
     func testExample() throws {
         // XCTest Documentation
         // https://developer.apple.com/documentation/xctest
