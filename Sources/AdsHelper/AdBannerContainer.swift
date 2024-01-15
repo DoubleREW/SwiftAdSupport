@@ -8,39 +8,36 @@
 import SwiftUI
 import GoogleMobileAds
 
-private struct AdBannerContainer: ViewModifier {
+struct AdBannerContainer: ViewModifier {
 
+    @SceneStorage(AdManager.AD_SCENE_ID_STORAGE_KEY)
+    private var adSceneId: String = UUID().uuidString
     @Environment(AdManager.self)
     private var adManager
     @State
     private var isBannerLoaded: Bool = false
     @State
     private var bannerSize: CGSize = .zero
-    @SceneStorage(AdManager.AD_SCENE_ID_STORAGE_KEY)
-    private var adSceneId: String = UUID().uuidString
 
     @ViewBuilder
     func body(content: Self.Content) -> some View {
         if adManager.canShowBannerAds {
             content
-                .safeAreaPadding(isBannerLoaded ? .bottom : [], 54)
+                .safeAreaPadding(isBannerLoaded ? .bottom : [], bannerSize.height)
                 .overlay(
                     AdBannerView(sceneId: adSceneId, bannerLoaded: $isBannerLoaded, bannerSize: $bannerSize)
                         .background(Material.regular)
                         .opacity(isBannerLoaded ? 1 : 0)
                         .allowsHitTesting(isBannerLoaded)
-                        .frame(maxWidth: .infinity, maxHeight: 54)
+                        .frame(maxWidth: .infinity, maxHeight: bannerSize.height)
                     , alignment: .bottom)
-                .onChange(of: isBannerLoaded) { oldValue, newValue in
-                    print("isBannerLoaded \(isBannerLoaded)")
-                }
         } else {
             content
         }
     }
 }
 
-extension View {
+public extension View {
     func adBannerContainer() -> some View {
         return self.modifier(AdBannerContainer())
     }

@@ -25,6 +25,8 @@ let package = Package(
             ]),
         .testTarget(
             name: "AdsHelperTests",
-            dependencies: ["AdsHelper"]),
+            dependencies: [
+                "AdsHelper",
+            ]),
     ]
 )

@@ -9,19 +9,28 @@ import Foundation
 import UIKit
 import GoogleMobileAds
 
-public class AdBannerViewManagerRegistry : NSObject {
-    public static let shared: AdBannerViewManagerRegistry = {
+class AdBannerViewManagerRegistry : NSObject {
+    static let shared: AdBannerViewManagerRegistry = {
         AdBannerViewManagerRegistry()
     }()
 
     private var managers: [UUID: AdBannerViewManager] = [:]
+    private var admobBannerUnitID: String? = nil
 
-    public func manager(for sceneId: UUID) -> AdBannerViewManager {
+    func configure(admobBannerUnitID: String?) {
+        self.admobBannerUnitID = admobBannerUnitID
+    }
+
+    func manager(for sceneId: UUID) -> AdBannerViewManager {
+        guard let admobBannerUnitID else {
+            fatalError("AdBannerViewManagerRegistry not configured")
+        }
+        
         if let manager = managers[sceneId] {
             return manager
         }
 
-        let manager = AdBannerViewManager(sceneId: sceneId)
+        let manager = AdBannerViewManager(sceneId: sceneId, admobBannerUnitId: admobBannerUnitID)
         manager.delegate = self
 
         managers[sceneId] = manager
@@ -46,12 +55,12 @@ fileprivate protocol AdBannerViewManagerDelegate: NSObject {
     func bannerViewManager(_ manager: AdBannerViewManager, didRemove viewController: AdBannerViewController)
 }
 
-public class AdBannerViewManager: NSObject {
-    public let sceneId: UUID
+class AdBannerViewManager: NSObject {
+    let sceneId: UUID
     fileprivate weak var delegate: AdBannerViewManagerDelegate? = nil
-    public var isBannerLoaded: Bool = false
-    public var admobBannerUnitId: String! = "ca-app-pub-3940256099942544/2435281174"
-    internal var admobBannerView: GADBannerView? {
+    private(set) var isBannerLoaded: Bool = false
+    private(set) var admobBannerUnitId: String
+    var admobBannerView: GADBannerView? {
         didSet {
             if admobBannerView == nil {
                 self.isBannerLoaded = false
@@ -67,13 +76,16 @@ public class AdBannerViewManager: NSObject {
 
         return bannerViewControllers[uuid]?.ref
     }
-    public var bannerView: UIView? {
+    var bannerView: UIView? {
         get {
             self.admobBannerView
         }
     }
+    var isSetupCompleted: Bool {
+        admobBannerView != nil && admobBannerView!.rootViewController != nil
+    }
 
-    public struct Notification {
+    struct Notification {
         static let bannerViewActionWillBegin = NSNotification.Name(rawValue: "bannerViewActionWillBegin")
         static let bannerViewActionDidFinish = NSNotification.Name(rawValue: "bannerViewActionDidFinish")
     }
@@ -94,32 +106,25 @@ public class AdBannerViewManager: NSObject {
         }
     }
 
-    public init(sceneId: UUID) {
+    init(sceneId: UUID, admobBannerUnitId: String) {
         self.sceneId = sceneId
+        self.admobBannerUnitId = admobBannerUnitId
         super.init()
     }
 
-    public func enable() {
-        self.setupAdmobBannerView()
-    }
-
+    @available(*, deprecated, message: "Do not call disable directly")
     public func disable() {
         self.admobBannerView?.removeFromSuperview()
         self.admobBannerView = nil
         self.refreshBannerViewControllers()
     }
 
-    internal func loadBannerAd(in view: UIView) {
+    func loadBannerAd(in view: UIView) {
         print("loadBannerAd")
 
         if let controller = findBannerViewController(of: view) {
             print("loadBannerAd \(controller.uuid)")
             activeBannerViewControllerUUID = controller.uuid
-        }
-
-        if self.admobBannerView == nil {
-            self.setupAdmobBannerView()
-            self.admobBannerView!.rootViewController = view.window?.rootViewController
         }
 
         // Step 2 - Determine the view width to use for the ad width.
@@ -136,11 +141,12 @@ public class AdBannerViewManager: NSObject {
         admobBannerView?.load(GADRequest())
     }
 
-    private func setupAdmobBannerView() {
+    func setupAdmobBannerView(for window: UIWindow) {
         self.admobBannerView = GADBannerView()
         self.admobBannerView!.adUnitID = self.admobBannerUnitId
         self.admobBannerView!.delegate = self
-        self.admobBannerView!.backgroundColor = .black
+        self.admobBannerView!.backgroundColor = .clear
+        self.admobBannerView!.rootViewController = window.rootViewController
 
         #if DEBUG
         print("Google Mobile Ads SDK version: \(GADMobileAds.sharedInstance().versionNumber)");
@@ -148,18 +154,15 @@ public class AdBannerViewManager: NSObject {
     }
 
     internal func add(bannerViewController controller: AdBannerViewController) {
-        print("add \(controller.view.window)")
         self.bannerViewControllers[controller.uuid] = WeakAdBannerViewController(ref: controller)
     }
 
     internal func remove(bannerViewController controller: AdBannerViewController) {
-        print("remove")
         self.bannerViewControllers.removeValue(forKey: controller.uuid)
         self.delegate?.bannerViewManager(self, didRemove: controller)
     }
 
     private func refreshBannerViewControllers() {
-        print(#function)
         for controller in self.bannerViewControllers.values {
             controller.ref?.updateLayout()
         }
@@ -188,23 +191,20 @@ public class AdBannerViewManager: NSObject {
 }
 
 extension AdBannerViewManager: GADBannerViewDelegate {
-    public func bannerViewDidReceiveAd(_ bannerView: GADBannerView) {
-        print(#function)
-        print("bannerViewDidReceiveAd:")
+    func bannerViewDidReceiveAd(_ bannerView: GADBannerView) {
         self.isBannerLoaded = true
         self.refreshBannerViewControllers()
     }
 
-    public func bannerView(_ bannerView: GADBannerView, didFailToReceiveAdWithError error: Error) {
-        print("bannerView:didFailToReceiveAdWithError: \(error.localizedDescription)")
+    func bannerView(_ bannerView: GADBannerView, didFailToReceiveAdWithError error: Error) {
         self.isBannerLoaded = false
     }
 
-    public func bannerViewWillPresentScreen(_ bannerView: GADBannerView) {
+    func bannerViewWillPresentScreen(_ bannerView: GADBannerView) {
         self.postBannerViewActionWillBeginNotification()
     }
 
-    public func bannerViewDidDismissScreen(_ bannerView: GADBannerView) {
+    func bannerViewDidDismissScreen(_ bannerView: GADBannerView) {
         self.postBannerViewActionDidFinishNotification()
     }
 }

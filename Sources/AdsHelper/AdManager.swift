@@ -10,10 +10,10 @@ import GoogleMobileAds
 
 @Observable
 public class AdManager {
-    public static let AD_SCENE_ID_STORAGE_KEY = "adSceneId"
+    package static let AD_SCENE_ID_STORAGE_KEY = "adSceneId"
 
     #if DEBUG
-    static let testManager: AdManager = {
+    public static let testManager: AdManager = {
         let manager = AdManager(
             admobBannerUnitID: "ca-app-pub-3940256099942544/2934735716",
             admobInterstitialUnitID: "ca-app-pub-3940256099942544/5135589807")
@@ -24,10 +24,10 @@ public class AdManager {
     }()
     #endif
 
-    private var admobBannerUnitID: String?
-    
-    private var admobInterstitialUnitID: String?
-    
+    public private(set) var admobBannerUnitID: String?
+
+    public private(set) var admobInterstitialUnitID: String?
+
     public private(set) var isEnabled: Bool = false
 
     public init(
@@ -36,6 +36,8 @@ public class AdManager {
     ) {
         self.admobBannerUnitID = admobBannerUnitID
         self.admobInterstitialUnitID = admobInterstitialUnitID
+
+        AdBannerViewManagerRegistry.shared.configure(admobBannerUnitID: admobBannerUnitID)
     }
 
     public var canShowBannerAds: Bool {
