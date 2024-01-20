@@ -120,10 +120,7 @@ class AdBannerViewManager: NSObject {
     }
 
     func loadBannerAd(in view: UIView) {
-        print("loadBannerAd")
-
         if let controller = findBannerViewController(of: view) {
-            print("loadBannerAd \(controller.uuid)")
             activeBannerViewControllerUUID = controller.uuid
         }
 
@@ -201,6 +198,7 @@ extension AdBannerViewManager: GADBannerViewDelegate {
     }
 
     func bannerViewWillPresentScreen(_ bannerView: GADBannerView) {
+        print("bannerViewWillPresentScreen")
         self.postBannerViewActionWillBeginNotification()
     }
 
