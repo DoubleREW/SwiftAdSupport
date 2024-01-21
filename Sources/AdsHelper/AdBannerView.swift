@@ -10,26 +10,22 @@ import SwiftUI
 struct AdBannerView: UIViewControllerRepresentable {
     typealias UIViewControllerType = AdBannerViewController
 
-    private var sceneId: String
-
     @Binding
     private var bannerLoaded: Bool
 
     @Binding
     private var bannerSize: CGSize
 
-    init(sceneId: String, bannerLoaded: Binding<Bool>, bannerSize: Binding<CGSize>) {
-        self.sceneId = sceneId
+    init(bannerLoaded: Binding<Bool>, bannerSize: Binding<CGSize>) {
         self._bannerLoaded = bannerLoaded
         self._bannerSize = bannerSize
     }
 
     func makeUIViewController(context: Context) -> AdBannerViewController {
-        guard let sceneUuid = UUID(uuidString: sceneId) else {
-            fatalError("Invalid scene id")
+        guard let bannerManager = context.environment[AdBannerViewManager.self] else {
+            fatalError("Ad interstitial manager not available")
         }
 
-        let bannerManager = AdBannerViewManagerRegistry.shared.manager(for: sceneUuid)
         let controller = AdBannerViewController(bannerViewManager: bannerManager)
         controller.delegate = context.coordinator
 

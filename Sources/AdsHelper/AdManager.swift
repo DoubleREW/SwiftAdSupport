@@ -10,8 +10,6 @@ import GoogleMobileAds
 
 @Observable
 public class AdManager {
-    package static let AD_SCENE_ID_STORAGE_KEY = "adSceneId"
-
     // Gestione consenso con UMP:  https://github.com/googleads/googleads-mobile-ios-examples/blob/main/Swift/admanager/AdManagerBannerExample/AdManagerBannerExample/GoogleMobileAdsConsentManager.swift
 
     #if DEBUG
@@ -45,8 +43,6 @@ public class AdManager {
         self.interstitialUsageCounter = interstitialUsageCounter
         self.askBeforePresentInterstitial = askBeforePresentInterstitial
         self.planUpgradeCallback = planUpgradeCallback
-
-        AdBannerViewManagerRegistry.shared.configure(admobBannerUnitID: admobBannerUnitID)
     }
 
     public var canShowBannerAds: Bool {

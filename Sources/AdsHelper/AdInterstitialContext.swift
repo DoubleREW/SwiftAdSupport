@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-typealias AdsTriggerHandler = (
+public typealias AdsTriggerHandler = (
     AdsDisplayOrder,
     @escaping () -> Void,
     (() async -> Void)?
@@ -25,21 +25,21 @@ private struct AdsTriggerKey: EnvironmentKey {
     }
 }
 
-extension EnvironmentValues {
+public extension EnvironmentValues {
     fileprivate(set) var adsTrigger: AdsTriggerHandler {
         get { self[AdsTriggerKey.self] }
         set { self[AdsTriggerKey.self] = newValue }
     }
 }
 
-struct AdInterstitialContext : ViewModifier {
+public struct AdInterstitialContext : ViewModifier {
     @Environment(AdManager.self)
     private var adManager
 
     @State
     private var interstitialManager = AdInterstitialManager()
 
-    func body(content: Content) -> some View {
+    public func body(content: Content) -> some View {
         content
             .onAppear {
                 interstitialManager.setup(
@@ -73,14 +73,15 @@ struct AdInterstitialContext : ViewModifier {
     }
 }
 
-extension View {
+public extension View {
     func adInterstitialContext() -> some View {
         self
             .modifier(AdInterstitialContext())
     }
 }
 
-struct AdsPreviewView : View {
+#if DEBUG
+private struct InterstitialAdsPreviewView : View {
     @Environment(\.adsTrigger)
     private var adsTrigger
 
@@ -97,10 +98,11 @@ struct AdsPreviewView : View {
         }
     }
 }
+#endif
 
 #Preview {
     NavigationView {
-        AdsPreviewView()
+        InterstitialAdsPreviewView()
             .adInterstitialContext()
     }
     .environment(AdManager.testManager)

@@ -9,57 +9,15 @@ import Foundation
 import UIKit
 import GoogleMobileAds
 
-class AdBannerViewManagerRegistry : NSObject {
-    static let shared: AdBannerViewManagerRegistry = {
-        AdBannerViewManagerRegistry()
-    }()
-
-    private var managers: [UUID: AdBannerViewManager] = [:]
-    private var admobBannerUnitID: String? = nil
-
-    func configure(admobBannerUnitID: String?) {
-        self.admobBannerUnitID = admobBannerUnitID
-    }
-
-    func manager(for sceneId: UUID) -> AdBannerViewManager {
-        guard let admobBannerUnitID else {
-            fatalError("AdBannerViewManagerRegistry not configured")
-        }
-        
-        if let manager = managers[sceneId] {
-            return manager
-        }
-
-        let manager = AdBannerViewManager(sceneId: sceneId, admobBannerUnitId: admobBannerUnitID)
-        manager.delegate = self
-
-        managers[sceneId] = manager
-
-        return manager
-    }
-
-    private func remove(manager: AdBannerViewManager) {
-        managers.removeValue(forKey: manager.sceneId)
-    }
-}
-
-extension AdBannerViewManagerRegistry : AdBannerViewManagerDelegate {
-    fileprivate func bannerViewManager(_ manager: AdBannerViewManager, didRemove viewController: AdBannerViewController) {
-        if manager.bannerViewControllers.isEmpty {
-            remove(manager: manager)
-        }
-    }
-}
-
 fileprivate protocol AdBannerViewManagerDelegate: NSObject {
     func bannerViewManager(_ manager: AdBannerViewManager, didRemove viewController: AdBannerViewController)
 }
 
+@Observable
 class AdBannerViewManager: NSObject {
-    let sceneId: UUID
     fileprivate weak var delegate: AdBannerViewManagerDelegate? = nil
     private(set) var isBannerLoaded: Bool = false
-    private(set) var admobBannerUnitId: String
+    private(set) var admobUnitId: String? = nil
     var admobBannerView: GADBannerView? {
         didSet {
             if admobBannerView == nil {
@@ -82,7 +40,7 @@ class AdBannerViewManager: NSObject {
         }
     }
     var isSetupCompleted: Bool {
-        admobBannerView != nil && admobBannerView!.rootViewController != nil
+        admobUnitId != nil && admobBannerView?.rootViewController != nil
     }
 
     struct Notification {
@@ -104,12 +62,6 @@ class AdBannerViewManager: NSObject {
         func hash(into hasher: inout Hasher) {
             hasher.combine(ref)
         }
-    }
-
-    init(sceneId: UUID, admobBannerUnitId: String) {
-        self.sceneId = sceneId
-        self.admobBannerUnitId = admobBannerUnitId
-        super.init()
     }
 
     @available(*, deprecated, message: "Do not call disable directly")
@@ -138,12 +90,16 @@ class AdBannerViewManager: NSObject {
         admobBannerView?.load(GADRequest())
     }
 
-    func setupAdmobBannerView(for window: UIWindow) {
-        self.admobBannerView = GADBannerView()
-        self.admobBannerView!.adUnitID = self.admobBannerUnitId
-        self.admobBannerView!.delegate = self
-        self.admobBannerView!.backgroundColor = .clear
-        self.admobBannerView!.rootViewController = window.rootViewController
+    internal func setup(admobUnitId: String? = nil) {
+        self.admobUnitId = admobUnitId
+    }
+
+    internal func setupAdmobBannerView(for window: UIWindow) {
+        admobBannerView = GADBannerView()
+        admobBannerView!.adUnitID = admobUnitId
+        admobBannerView!.delegate = self
+        admobBannerView!.backgroundColor = .clear
+        admobBannerView!.rootViewController = window.rootViewController
 
         #if DEBUG
         print("Google Mobile Ads SDK version: \(GADMobileAds.sharedInstance().versionNumber)");
@@ -160,7 +116,7 @@ class AdBannerViewManager: NSObject {
     }
 
     private func refreshBannerViewControllers() {
-        for controller in self.bannerViewControllers.values {
+        for controller in bannerViewControllers.values {
             controller.ref?.updateLayout()
         }
     }
@@ -189,21 +145,20 @@ class AdBannerViewManager: NSObject {
 
 extension AdBannerViewManager: GADBannerViewDelegate {
     func bannerViewDidReceiveAd(_ bannerView: GADBannerView) {
-        self.isBannerLoaded = true
-        self.refreshBannerViewControllers()
+        isBannerLoaded = true
+        refreshBannerViewControllers()
     }
 
     func bannerView(_ bannerView: GADBannerView, didFailToReceiveAdWithError error: Error) {
-        self.isBannerLoaded = false
+        isBannerLoaded = false
     }
 
     func bannerViewWillPresentScreen(_ bannerView: GADBannerView) {
-        print("bannerViewWillPresentScreen")
-        self.postBannerViewActionWillBeginNotification()
+        postBannerViewActionWillBeginNotification()
     }
 
     func bannerViewDidDismissScreen(_ bannerView: GADBannerView) {
-        self.postBannerViewActionDidFinishNotification()
+        postBannerViewActionDidFinishNotification()
     }
 }
 

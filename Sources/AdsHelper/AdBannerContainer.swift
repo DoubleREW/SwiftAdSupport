@@ -10,8 +10,6 @@ import GoogleMobileAds
 
 struct AdBannerContainer: ViewModifier {
 
-    @SceneStorage(AdManager.AD_SCENE_ID_STORAGE_KEY)
-    private var adSceneId: String = UUID().uuidString
     @Environment(AdManager.self)
     private var adManager
     @State
@@ -25,7 +23,7 @@ struct AdBannerContainer: ViewModifier {
             content
                 .safeAreaPadding(isBannerLoaded ? .bottom : [], bannerSize.height)
                 .overlay(
-                    AdBannerView(sceneId: adSceneId, bannerLoaded: $isBannerLoaded, bannerSize: $bannerSize)
+                    AdBannerView(bannerLoaded: $isBannerLoaded, bannerSize: $bannerSize)
                         .background(Material.regular)
                         .opacity(isBannerLoaded ? 1 : 0)
                         .allowsHitTesting(isBannerLoaded)
@@ -58,6 +56,7 @@ public extension View {
         .navigationTitle("My List")
         .adBannerContainer()
     }
+    .adBannerContext()
     .environment(AdManager.testManager)
 }
 
@@ -94,5 +93,6 @@ public extension View {
         }
         .tabItem { Label("Tab 2", image: "gear") }
     }
+    .adBannerContext()
     .environment(AdManager.testManager)
 }
