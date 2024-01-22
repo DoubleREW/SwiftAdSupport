@@ -10,80 +10,56 @@ import GoogleMobileAds
 
 @Observable
 public class AdInterstitialManager : NSObject {
-    private var admobUnitId: String? = nil
+    private var provider: (any AdFullscreenProvider)? = nil
     private var usageCounter: (any UsageCounter)? = nil
     private var askBeforePresent: Bool = true
-    private weak var rootViewController: UIViewController? = nil
-    private var interstitial: GADInterstitialAd?
     public var isUpgradePlanAlertPresented = false
     public private(set) var isInterstitialVisible = false
-    private var isLoadingAd = false
     public var isReady: Bool {
-        return self.interstitial != nil
+        self.provider?.isReady == true
     }
 
     override init() {
     }
 
     var isSetupCompleted: Bool {
-        admobUnitId != nil && rootViewController != nil
+        provider?.isSetupCompleted == true
     }
 
     func setup(rootViewController: UIViewController) {
-        self.rootViewController = rootViewController
+        provider?.setup(rootViewController: rootViewController)
 
-        if isSetupCompleted && interstitial == nil {
-            loadAd()
-        }
+        loadAd()
     }
 
-    func setup(admobUnitId: String?, askBeforePresent: Bool = true, usageCounter: (any UsageCounter)? = nil) {
-        self.admobUnitId = admobUnitId
+    func setup(provider: (any AdFullscreenProvider)?, askBeforePresent: Bool = true, usageCounter: (any UsageCounter)? = nil) {
+        self.provider = provider
         self.askBeforePresent = askBeforePresent
         self.usageCounter = usageCounter
 
-        if isSetupCompleted && interstitial == nil {
-            loadAd()
-        }
+        loadAd()
     }
 
     private func loadAd() {
-        guard let adUnitId =  self.admobUnitId else { return }
-        guard !isLoadingAd else { return }
-
-        isLoadingAd.toggle()
-
-        let adRequest = GADRequest()
-        GADInterstitialAd.load(withAdUnitID: adUnitId, request: adRequest) { (ad, error) in
-            if let error {
-                self.interstitial = nil
-                print("Failed to load interstitial ad with error: \(error.localizedDescription)")
-                return
-            }
-
-            self.interstitial = ad
-            self.interstitial?.fullScreenContentDelegate = self
-            self.isLoadingAd = false
+        if let provider, provider.isSetupCompleted && !provider.isReady {
+            provider.load()
         }
     }
 
     public func presentAd() {
-        guard
-            let rootViewController,
-            let interstitial
-        else {
+        guard let provider, provider.isSetupCompleted else {
             return
         }
 
         guard isReady else {
-            if !isLoadingAd {
-                loadAd()
+            if !provider.isLoadingAd {
+                provider.load()
             }
 
             return
         }
 
-        interstitial.present(fromRootViewController: rootViewController)
+        provider.present()
     }
 
     public func trigger() {
@@ -106,24 +82,25 @@ public class AdInterstitialManager : NSObject {
 }
 
 
-extension AdInterstitialManager: GADFullScreenContentDelegate {
-    /// Tells the delegate an ad request failed.
-    public func ad(_ ad: GADFullScreenPresentingAd, didFailToPresentFullScreenContentWithError error: Error) {
-        print("interstitial:didFailToReceiveAdWithError: \(error.localizedDescription)")
-        interstitial = nil
+extension AdInterstitialManager: AdFullscreenProviderDelegate {
+    public func adFullscreenProviderDidReceiveAd(_ provider: AdFullscreenProvider) { }
+
+    public func adFullscreenProvider(_ provider: AdFullscreenProvider, didFailToReceiveAdWithError error: Error) {
+        isInterstitialVisible = false
     }
 
-    public func adWillPresentFullScreenContent(_ ad: GADFullScreenPresentingAd) {
+    public func adFullscreenProvider(_ provider: AdFullscreenProvider, didFailToPresentFullScreenContentWithError error: Error) {
+        isInterstitialVisible = false
+    }
+
+    public func adFullscreenProviderWillPresentFullScreenContent(_ provider: AdFullscreenProvider) {
         usageCounter?.reset()
-    }
-
-    /// Tells the delegate that an interstitial will be presented.
-    public func adWillDismissFullScreenContent(_ ad: GADFullScreenPresentingAd) {
         isInterstitialVisible = true
     }
 
-    /// Tells the delegate the interstitial had been animated off the screen.
-    public func adDidDismissFullScreenContent(_ ad: GADFullScreenPresentingAd) {
+    public func adFullscreenProviderWillDismissFullScreenContent(_ provider: AdFullscreenProvider) { }
+
+    public func adFullscreenProviderDidDismissFullScreenContent(_ provider: AdFullscreenProvider) {
         isInterstitialVisible = false
         loadAd()
     }

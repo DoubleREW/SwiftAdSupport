@@ -58,4 +58,26 @@ public class AdManager {
     public func disable() {
         isEnabled = false
     }
+
+    func makeBannerProvider(delegate: any AdBannerProviderDelegate) -> (any AdBannerProvider)? {
+        guard let admobBannerUnitID else {
+            return nil
+        }
+
+        let provider = AdmobAdBannerProvider(admobUnitId: admobBannerUnitID)
+        provider.delegate = delegate
+
+        return provider
+    }
+
+    func makeFullscreenProvider(delegate: any AdFullscreenProviderDelegate) -> (any AdFullscreenProvider)? {
+        guard let admobInterstitialUnitID else {
+            return nil
+        }
+
+        let provider = AdmobAdInterstitialProvider(admobUnitId: admobInterstitialUnitID)
+        provider.delegate = delegate
+
+        return provider
+    }
 }

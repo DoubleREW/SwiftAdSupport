@@ -43,7 +43,7 @@ public struct AdInterstitialContext : ViewModifier {
         content
             .onAppear {
                 interstitialManager.setup(
-                    admobUnitId: adManager.admobInterstitialUnitID,
+                    provider: adManager.makeFullscreenProvider(delegate: interstitialManager),
                     askBeforePresent: adManager.askBeforePresentInterstitial,
                     usageCounter: adManager.interstitialUsageCounter
                 )

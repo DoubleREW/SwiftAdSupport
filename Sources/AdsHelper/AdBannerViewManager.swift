@@ -5,9 +5,7 @@
 //  Created by Fausto Ristagno on 13/01/24.
 //
 
-import Foundation
 import UIKit
-import GoogleMobileAds
 
 fileprivate protocol AdBannerViewManagerDelegate: NSObject {
     func bannerViewManager(_ manager: AdBannerViewManager, didRemove viewController: AdBannerViewController)
@@ -15,16 +13,10 @@ fileprivate protocol AdBannerViewManagerDelegate: NSObject {
 
 @Observable
 class AdBannerViewManager: NSObject {
+    private var provider: (any AdBannerProvider)? = nil
+
     fileprivate weak var delegate: AdBannerViewManagerDelegate? = nil
     private(set) var isBannerLoaded: Bool = false
-    private(set) var admobUnitId: String? = nil
-    var admobBannerView: GADBannerView? {
-        didSet {
-            if admobBannerView == nil {
-                self.isBannerLoaded = false
-            }
-        }
-    }
     fileprivate var bannerViewControllers = [UUID: WeakAdBannerViewController]()
     private var activeBannerViewControllerUUID: UUID? = nil
     private var activeBannerViewController: AdBannerViewController? {
@@ -36,11 +28,11 @@ class AdBannerViewManager: NSObject {
     }
     var bannerView: UIView? {
         get {
-            self.admobBannerView
+            provider?.bannerView
         }
     }
     var isSetupCompleted: Bool {
-        admobUnitId != nil && admobBannerView?.rootViewController != nil
+        provider?.isSetupCompleted == true
     }
 
     struct Notification {
@@ -64,46 +56,22 @@ class AdBannerViewManager: NSObject {
         }
     }
 
-    @available(*, deprecated, message: "Do not call disable directly")
-    public func disable() {
-        self.admobBannerView?.removeFromSuperview()
-        self.admobBannerView = nil
-        self.refreshBannerViewControllers()
-    }
-
     func loadBannerAd(in view: UIView) {
         if let controller = findBannerViewController(of: view) {
             activeBannerViewControllerUUID = controller.uuid
         }
 
-        // Step 2 - Determine the view width to use for the ad width.
         let frame = view.frame.inset(by: view.safeAreaInsets)
-        let viewWidth = frame.size.width
 
-        // Step 3 - Get Adaptive GADAdSize and set the ad view.
-        // Here the current interface orientation is used. If the ad is being preloaded
-        // for a future orientation change or different orientation, the function for the
-        // relevant orientation should be used.
-        admobBannerView?.adSize = GADCurrentOrientationAnchoredAdaptiveBannerAdSizeWithWidth(viewWidth)
-
-        // Step 4 - Create an ad request and load the adaptive banner ad.
-        admobBannerView?.load(GADRequest())
+        provider?.load(for: frame.size)
     }
 
-    internal func setup(admobUnitId: String? = nil) {
-        self.admobUnitId = admobUnitId
+    internal func setup(provider: (any AdBannerProvider)? = nil) {
+        self.provider = provider
     }
 
-    internal func setupAdmobBannerView(for window: UIWindow) {
-        admobBannerView = GADBannerView()
-        admobBannerView!.adUnitID = admobUnitId
-        admobBannerView!.delegate = self
-        admobBannerView!.backgroundColor = .clear
-        admobBannerView!.rootViewController = window.rootViewController
-
-        #if DEBUG
-        print("Google Mobile Ads SDK version: \(GADMobileAds.sharedInstance().versionNumber)");
-        #endif
+    internal func setup(window: UIWindow) {
+        provider?.setup(window: window)
     }
 
     internal func add(bannerViewController controller: AdBannerViewController) {
@@ -143,22 +111,21 @@ class AdBannerViewManager: NSObject {
     }
 }
 
-extension AdBannerViewManager: GADBannerViewDelegate {
-    func bannerViewDidReceiveAd(_ bannerView: GADBannerView) {
+extension AdBannerViewManager: AdBannerProviderDelegate {
+    func adBannerProviderDidReceiveAd(_ provider: AdBannerProvider) {
         isBannerLoaded = true
         refreshBannerViewControllers()
     }
 
-    func bannerView(_ bannerView: GADBannerView, didFailToReceiveAdWithError error: Error) {
+    func adBannerProvider(_ provider: AdBannerProvider, didFailToReceiveAdWithError error: Error) {
         isBannerLoaded = false
     }
 
-    func bannerViewWillPresentScreen(_ bannerView: GADBannerView) {
+    func adBannerProviderWillPresentScreen(_ provider: AdBannerProvider) {
         postBannerViewActionWillBeginNotification()
     }
 
-    func bannerViewDidDismissScreen(_ bannerView: GADBannerView) {
+    func adBannerProviderDidDismissScreen(_ provider: AdBannerProvider) {
         postBannerViewActionDidFinishNotification()
     }
 }
-

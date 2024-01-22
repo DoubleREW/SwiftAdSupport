@@ -87,7 +87,7 @@ class AdBannerViewController: UIViewController {
             guard isViewLoaded else { return }
             guard let window = view.window else { return }
 
-            bannerViewManager.setupAdmobBannerView(for: window)
+            bannerViewManager.setup(window: window)
         }
 
         if !bannerViewManager.isBannerLoaded {

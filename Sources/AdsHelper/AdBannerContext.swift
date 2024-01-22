@@ -17,9 +17,9 @@ public struct AdBannerContext : ViewModifier {
     public func body(content: Content) -> some View {
         content
             .onAppear {
-                bannerManager.setup(
-                    admobUnitId: adManager.admobBannerUnitID
-                )
+                bannerManager.setup(provider: adManager.makeBannerProvider(
+                    delegate: bannerManager
+                ))
             }
             .environment(bannerManager)
     }
