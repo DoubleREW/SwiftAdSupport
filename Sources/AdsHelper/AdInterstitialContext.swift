@@ -9,16 +9,16 @@ import SwiftUI
 
 public typealias AdsTriggerHandler = (
     AdsDisplayOrder,
-    @escaping () -> Void,
+    @escaping () async -> Void,
     (() async -> Void)?
 ) -> Void
 
 private struct AdsTriggerKey: EnvironmentKey {
-    static let defaultValue: AdsTriggerHandler = {
-        $1()
+    static let defaultValue: AdsTriggerHandler = { (_, action, completion) in
+        Task {
+            await action()
 
-        if let completion = $2 {
-            Task {
+            if let completion {
                 await completion()
             }
         }
@@ -62,13 +62,20 @@ public struct AdInterstitialContext : ViewModifier {
                     adManager.planUpgradeCallback()
                 }
                 Button("Cancel", role: .cancel) {
-                    // Handle the deletion.
+                    interstitialManager.onDismissAction = nil
                 }
 
             }
             .environment(interstitialManager)
             .environment(\.adsTrigger, { (position, action, completion) in
-                AdsTrigger(manager: interstitialManager, position: position, action: action, completion: completion)
+                Task {
+                    await AdsTrigger(
+                        manager: interstitialManager,
+                        position: position,
+                        action: action,
+                        completion: completion
+                    )()
+                }
             })
     }
 }
@@ -87,9 +94,16 @@ private struct InterstitialAdsPreviewView : View {
 
     var body: some View {
         VStack {
-            Text("AAAA")
-            Button("BBBB") {
-                adsTrigger(.after, {
+            Text("Content")
+            Button("Show ad before action") {
+                adsTrigger(.beforeAction, {
+                    print("Azione")
+                }, {
+                    print("Completato")
+                })
+            }
+            Button("Show ad after action") {
+                adsTrigger(.afterAction, {
                     print("Azione")
                 }, {
                     print("Completato")

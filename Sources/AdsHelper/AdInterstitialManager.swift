@@ -15,6 +15,7 @@ public class AdInterstitialManager : NSObject {
     private var askBeforePresent: Bool = true
     public var isUpgradePlanAlertPresented = false
     public private(set) var isInterstitialVisible = false
+    var onDismissAction: (() async -> Void)? = nil
     public var isReady: Bool {
         self.provider?.isReady == true
     }
@@ -66,7 +67,8 @@ public class AdInterstitialManager : NSObject {
         provider.present()
     }
 
-    public func trigger() {
+    @discardableResult
+    public func trigger() -> Bool {
         let isLimitReached: Bool
         if let usageCounter {
             usageCounter.increment()
@@ -75,13 +77,17 @@ public class AdInterstitialManager : NSObject {
             isLimitReached = true
         }
 
-        guard isLimitReached else { return }
+        guard isLimitReached else {
+            return false
+        }
 
         if askBeforePresent {
             isUpgradePlanAlertPresented = true
         } else {
             presentAd()
         }
+
+        return true
     }
 }
 
@@ -91,10 +97,12 @@ extension AdInterstitialManager: AdFullscreenProviderDelegate {
 
     public func adFullscreenProvider(_ provider: AdFullscreenProvider, didFailToReceiveAdWithError error: Error) {
         isInterstitialVisible = false
+        onDismissAction = nil
     }
 
     public func adFullscreenProvider(_ provider: AdFullscreenProvider, didFailToPresentFullScreenContentWithError error: Error) {
         isInterstitialVisible = false
+        onDismissAction = nil
     }
 
     public func adFullscreenProviderWillPresentFullScreenContent(_ provider: AdFullscreenProvider) {
@@ -107,5 +115,13 @@ extension AdInterstitialManager: AdFullscreenProviderDelegate {
     public func adFullscreenProviderDidDismissFullScreenContent(_ provider: AdFullscreenProvider) {
         isInterstitialVisible = false
         loadAd()
+
+        if let onDismissAction {
+            Task {
+                await onDismissAction()
+            }
+
+            self.onDismissAction = nil
+        }
     }
 }

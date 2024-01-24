@@ -9,24 +9,24 @@ import Foundation
 import SwiftUI
 
 public enum AdsDisplayOrder {
-    case before
-    case after
+    case beforeAction
+    case afterAction
 
     public static var defaultOrder: Self {
-        AdsDisplayOrder.after
+        AdsDisplayOrder.afterAction
     }
 }
 
-struct AsyncThrowingAdsTrigger {
+struct AdsTrigger {
     private let manager: AdInterstitialManager
     private let position: AdsDisplayOrder
-    private let action: () async throws -> Void
+    private let action: () async -> Void
     private let completion: (() async -> Void)?
 
     init(
         manager: AdInterstitialManager,
         position: AdsDisplayOrder = .defaultOrder,
-        action: @escaping () async throws -> Void,
+        action: @escaping () async -> Void,
         completion: (() async -> Void)? = nil
     ) {
         self.manager = manager
@@ -35,89 +35,33 @@ struct AsyncThrowingAdsTrigger {
         self.completion = completion
     }
 
-    func callAsFunction() async throws {
-        if position == .after {
-            print("Show ads")
-            manager.trigger()
-        }
+    func fire() async {
+        let completion = self.completion ?? {}
 
-        try await action()
+        if position == .beforeAction {
+            if manager.trigger() {
+                manager.onDismissAction = {
+                    await action()
+                    await completion()
+                }
+            } else {
+                await action()
+                await completion()
+            }
+        } else {
+            await action()
 
-        if position == .before {
-            print("Show ads")
-            manager.trigger()
-        }
-
-        if let completion {
-            await completion()
+            if manager.trigger() {
+                manager.onDismissAction = {
+                    await completion()
+                }
+            } else {
+                await completion()
+            }
         }
     }
-}
 
-public func AdsTrigger(
-    manager: AdInterstitialManager,
-    position: AdsDisplayOrder = .defaultOrder,
-    action: @escaping () async throws -> Void,
-    completion: (() async -> Void)? = nil
-) async throws {
-    try await AsyncThrowingAdsTrigger(
-        manager: manager,
-        position: position,
-        action: action,
-        completion: completion
-    )()
-}
-
-public func AdsTrigger(
-    manager: AdInterstitialManager,
-    position: AdsDisplayOrder = .defaultOrder,
-    action: @escaping () async -> Void,
-    completion: (() async -> Void)? = nil
-) async {
-    do {
-        try await AsyncThrowingAdsTrigger(
-            manager: manager,
-            position: position,
-            action: action,
-            completion: completion
-        )()
-    } catch {
-        fatalError("Non throwing action as thrown an error")
-    }
-}
-
-public func AdsTrigger(
-    manager: AdInterstitialManager,
-    position: AdsDisplayOrder = .defaultOrder,
-    action: @escaping () throws -> Void,
-    completion: (() async -> Void)? = nil
-) throws {
-    Task {
-        try await AsyncThrowingAdsTrigger(
-            manager: manager,
-            position: position,
-            action: action,
-            completion: completion
-        )()
-    }
-}
-
-public func AdsTrigger(
-    manager: AdInterstitialManager,
-    position: AdsDisplayOrder = .defaultOrder,
-    action: @escaping () -> Void,
-    completion: (() async -> Void)? = nil
-) {
-    Task {
-        do {
-            try await AsyncThrowingAdsTrigger(
-                manager: manager,
-                position: position,
-                action: action,
-                completion: completion
-            )()
-        } catch {
-            fatalError("Non throwing action as thrown an error")
-        }
+    func callAsFunction() async {
+        await fire()
     }
 }
