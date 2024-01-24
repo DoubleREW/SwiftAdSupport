@@ -67,6 +67,10 @@ class AdBannerViewManager: NSObject {
     }
 
     internal func setup(provider: (any AdBannerProvider)? = nil) {
+        guard self.provider?.isSetupCompleted != true || self.provider?.type != provider?.type else {
+            return
+        }
+        
         self.provider = provider
     }
 

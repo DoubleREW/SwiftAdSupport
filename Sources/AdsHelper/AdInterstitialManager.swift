@@ -33,6 +33,10 @@ public class AdInterstitialManager : NSObject {
     }
 
     func setup(provider: (any AdFullscreenProvider)?, askBeforePresent: Bool = true, usageCounter: (any UsageCounter)? = nil) {
+        guard self.provider?.isSetupCompleted != true || self.provider?.type != provider?.type else {
+            return
+        }
+
         self.provider = provider
         self.askBeforePresent = askBeforePresent
         self.usageCounter = usageCounter

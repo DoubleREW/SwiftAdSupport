@@ -8,7 +8,16 @@
 import UIKit
 import GoogleMobileAds
 
+extension AdProviderType {
+    public static let admobBanner: Self = "admobBanner"
+    public static let admobInterstitial: Self = "admobInterstitial"
+}
+
 public class AdmobAdBannerProvider : NSObject, AdBannerProvider {
+    public var type: AdProviderType {
+        .admobBanner
+    }
+
     public private(set) var admobUnitId: String
 
     public weak var delegate: AdBannerProviderDelegate? = nil
@@ -73,6 +82,10 @@ extension AdmobAdBannerProvider: GADBannerViewDelegate {
 }
 
 public class AdmobAdInterstitialProvider : NSObject, AdFullscreenProvider {
+    public var type: AdProviderType {
+        .admobInterstitial
+    }
+
     public private(set) var admobUnitId: String
     public weak var delegate: AdFullscreenProviderDelegate? = nil
     private weak var rootViewController: UIViewController? = nil

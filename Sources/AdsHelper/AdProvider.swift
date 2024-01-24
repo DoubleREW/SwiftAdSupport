@@ -7,7 +7,21 @@
 
 import UIKit
 
-public protocol AdProvider {}
+public struct AdProviderType : RawRepresentable, ExpressibleByStringLiteral, Equatable {
+    public var rawValue: String
+
+    public init(rawValue: String) {
+        self.rawValue = rawValue
+    }
+
+    public init(stringLiteral value: StringLiteralType) {
+        self.init(rawValue: value)
+    }
+}
+
+public protocol AdProvider {
+    var type: AdProviderType { get }
+}
 
 public protocol AdProviderDelegate {}
 
