@@ -59,7 +59,10 @@ public class AdmobAdBannerProvider : NSObject, AdBannerProvider {
 
         admobBannerView.adSize = GADCurrentOrientationAnchoredAdaptiveBannerAdSizeWithWidth(size.width)
 
-        admobBannerView.load(GADRequest())
+        let request = GADRequest()
+        request.scene = admobBannerView.rootViewController?.view.window?.windowScene
+
+        admobBannerView.load(request)
     }
 }
 
@@ -114,7 +117,10 @@ public class AdmobAdInterstitialProvider : NSObject, AdFullscreenProvider {
 
         isLoadingAd.toggle()
 
-        GADInterstitialAd.load(withAdUnitID: admobUnitId, request: GADRequest()) { [weak self] (ad, error) in
+        let request = GADRequest()
+        request.scene = rootViewController?.view.window?.windowScene
+
+        GADInterstitialAd.load(withAdUnitID: admobUnitId, request: request) { [weak self] (ad, error) in
             guard let self else { return }
 
             if let error {
