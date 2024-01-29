@@ -36,6 +36,9 @@ public struct AdInterstitialContext : ViewModifier {
     @Environment(AdManager.self)
     private var adManager
 
+    @Environment(\.appUpgradeHandler)
+    private var appUpgradeHandler
+
     @State
     private var interstitialManager = AdInterstitialManager()
 
@@ -59,7 +62,7 @@ public struct AdInterstitialContext : ViewModifier {
                     interstitialManager.presentAd()
                 }
                 Button("Discover PRO upgrade") {
-                    adManager.planUpgradeCallback()
+                    appUpgradeHandler()
                 }
                 Button("Cancel", role: .cancel) {
                     interstitialManager.onDismissAction = nil
@@ -118,6 +121,9 @@ private struct InterstitialAdsPreviewView : View {
     NavigationView {
         InterstitialAdsPreviewView()
             .adInterstitialContext()
+            .onAdAppUpgradeRequested {
+                print("App upgrade requested")
+            }
     }
     .environment(AdManager.testManager)
 }

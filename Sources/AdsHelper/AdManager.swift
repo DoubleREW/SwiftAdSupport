@@ -28,21 +28,18 @@ public class AdManager {
     public private(set) var admobInterstitialUnitID: String?
     public private(set) var interstitialUsageCounter: (any UsageCounter)?
     public private(set) var askBeforePresentInterstitial: Bool = true
-    public private(set) var planUpgradeCallback: () -> Void = {}
     public private(set) var isEnabled: Bool = false
 
     public init(
         admobBannerUnitID: String? = nil,
         admobInterstitialUnitID: String? = nil,
         interstitialUsageCounter: (any UsageCounter)? = nil,
-        askBeforePresentInterstitial: Bool = true,
-        planUpgradeCallback: @escaping () -> Void = {}
+        askBeforePresentInterstitial: Bool = true
     ) {
         self.admobBannerUnitID = admobBannerUnitID
         self.admobInterstitialUnitID = admobInterstitialUnitID
         self.interstitialUsageCounter = interstitialUsageCounter
         self.askBeforePresentInterstitial = askBeforePresentInterstitial
-        self.planUpgradeCallback = planUpgradeCallback
     }
 
     public var canShowBannerAds: Bool {
