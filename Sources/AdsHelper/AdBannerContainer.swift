@@ -60,6 +60,27 @@ public extension View {
     .environment(AdManager.testManager)
 }
 
+#Preview("Sheet") {
+    NavigationView {
+        List {
+            Text("View")
+        }
+        .adBannerContainer()
+        .navigationTitle("My List")
+        .sheet(isPresented: .constant(true), content: {
+            NavigationView {
+                List {
+                    Text("Sheet")
+                }
+            }
+            .adBannerContainer()
+        })
+    }
+    .adBannerContext()
+    .environment(AdManager.testManager)
+}
+
+
 #Preview("Tabs") {
     TabView {
         NavigationView {

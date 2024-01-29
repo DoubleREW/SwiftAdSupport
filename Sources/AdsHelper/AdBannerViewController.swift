@@ -50,6 +50,12 @@ class AdBannerViewController: UIViewController {
         becomeBannerOwner()
     }
 
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+
+        bannerViewManager.bannerViewController(didDisappear: self)
+    }
+
     override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
         super.viewWillTransition(to:size, with:coordinator)
 

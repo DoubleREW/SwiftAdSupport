@@ -18,7 +18,10 @@ class AdBannerViewManager: NSObject {
     fileprivate weak var delegate: AdBannerViewManagerDelegate? = nil
     private(set) var isBannerLoaded: Bool = false
     fileprivate var bannerViewControllers = [UUID: WeakAdBannerViewController]()
-    private var activeBannerViewControllerUUID: UUID? = nil
+    private var bannerViewControllersPath: [UUID] = []
+    private var activeBannerViewControllerUUID: UUID? {
+        return bannerViewControllersPath.last
+    }
     private var activeBannerViewController: AdBannerViewController? {
         guard let uuid = activeBannerViewControllerUUID else {
             return nil
@@ -58,7 +61,7 @@ class AdBannerViewManager: NSObject {
 
     func loadBannerAd(in view: UIView) {
         if let controller = findBannerViewController(of: view) {
-            activeBannerViewControllerUUID = controller.uuid
+            bannerViewControllersPath.append(controller.uuid)
         }
 
         let frame = view.frame.inset(by: view.safeAreaInsets)
@@ -85,6 +88,15 @@ class AdBannerViewManager: NSObject {
     internal func remove(bannerViewController controller: AdBannerViewController) {
         self.bannerViewControllers.removeValue(forKey: controller.uuid)
         self.delegate?.bannerViewManager(self, didRemove: controller)
+    }
+
+    internal func bannerViewController(didDisappear controller: AdBannerViewController) {
+        let bannerOwnerChanged = self.activeBannerViewControllerUUID == controller.uuid
+
+        self.bannerViewControllersPath.removeAll { $0 == controller.uuid }
+        if let activeBannerViewControllerUUID {
+            self.bannerViewControllers[activeBannerViewControllerUUID]?.ref?.becomeBannerOwner()
+        }
     }
 
     private func refreshBannerViewControllers() {
