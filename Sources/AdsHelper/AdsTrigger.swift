@@ -65,3 +65,39 @@ struct AdsTrigger {
         await fire()
     }
 }
+
+public typealias AdsTriggerHandler = (
+    AdsDisplayOrder,
+    @escaping () async -> Void,
+    (() async -> Void)?
+) -> Void
+
+private struct AdsTriggerKey: EnvironmentKey {
+    static let defaultValue: AdsTriggerHandler = { (_, action, completion) in
+        Task {
+            await action()
+
+            if let completion {
+                await completion()
+            }
+        }
+    }
+}
+
+public typealias AdsAsyncTriggerHandler = () -> Void
+
+private struct AdsAsyncTriggerKey: EnvironmentKey {
+    static let defaultValue: AdsAsyncTriggerHandler = { }
+}
+
+public extension EnvironmentValues {
+    internal(set) var adsTrigger: AdsTriggerHandler {
+        get { self[AdsTriggerKey.self] }
+        set { self[AdsTriggerKey.self] = newValue }
+    }
+
+    internal(set) var adsAsyncTrigger: AdsAsyncTriggerHandler {
+        get { self[AdsAsyncTriggerKey.self] }
+        set { self[AdsAsyncTriggerKey.self] = newValue }
+    }
+}

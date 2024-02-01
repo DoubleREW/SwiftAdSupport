@@ -7,31 +7,6 @@
 
 import SwiftUI
 
-public typealias AdsTriggerHandler = (
-    AdsDisplayOrder,
-    @escaping () async -> Void,
-    (() async -> Void)?
-) -> Void
-
-private struct AdsTriggerKey: EnvironmentKey {
-    static let defaultValue: AdsTriggerHandler = { (_, action, completion) in
-        Task {
-            await action()
-
-            if let completion {
-                await completion()
-            }
-        }
-    }
-}
-
-public extension EnvironmentValues {
-    fileprivate(set) var adsTrigger: AdsTriggerHandler {
-        get { self[AdsTriggerKey.self] }
-        set { self[AdsTriggerKey.self] = newValue }
-    }
-}
-
 public struct AdInterstitialContext : ViewModifier {
     @Environment(AdManager.self)
     private var adManager
@@ -77,6 +52,18 @@ public struct AdInterstitialContext : ViewModifier {
                         position: position,
                         action: action,
                         completion: completion
+                    )()
+                }
+            })
+            .environment(\.adsAsyncTrigger, {
+                Task {
+                    try await Task.sleep(nanoseconds: 2_000_000_000)
+
+                    await AdsTrigger(
+                        manager: interstitialManager,
+                        position: .defaultOrder,
+                        action: {},
+                        completion: nil
                     )()
                 }
             })
