@@ -17,15 +17,18 @@ public struct AdInterstitialContext : ViewModifier {
     @State
     private var interstitialManager = AdInterstitialManager()
 
+    private var isInterstitialEnabled: Bool {
+        adManager.isEnabled && interstitialManager.isReady
+    }
+
     public func body(content: Content) -> some View {
         content
-            .onAppear {
-                interstitialManager.setup(
-                    provider: adManager.makeFullscreenProvider(delegate: interstitialManager),
-                    askBeforePresent: adManager.askBeforePresentInterstitial,
-                    usageCounter: adManager.interstitialUsageCounter
-                )
-            }
+            .onAppear(perform: {
+                setupIfNeeded()
+            })
+            .onChange(of: adManager.isEnabled, {
+                setupIfNeeded()
+            })
             .background {
                 // Add the adViewControllerRepresentable to the background so it
                 // doesn't influence the placement of other views in the view hierarchy.
@@ -46,6 +49,14 @@ public struct AdInterstitialContext : ViewModifier {
             }
             .environment(interstitialManager)
             .environment(\.adsTrigger, { (position, action, completion) in
+                guard isInterstitialEnabled else {
+                    Task {
+                        await action()
+                        await completion?()
+                    }
+                    return
+                }
+
                 Task {
                     await AdsTrigger(
                         manager: interstitialManager,
@@ -56,6 +67,10 @@ public struct AdInterstitialContext : ViewModifier {
                 }
             })
             .environment(\.adsAsyncTrigger, {
+                guard isInterstitialEnabled else {
+                    return
+                }
+
                 Task {
                     try await Task.sleep(nanoseconds: 2_000_000_000)
 
@@ -67,6 +82,18 @@ public struct AdInterstitialContext : ViewModifier {
                     )()
                 }
             })
+    }
+
+    private func setupIfNeeded() {
+        guard !interstitialManager.isSetupCompleted && adManager.isEnabled else {
+            return
+        }
+
+        interstitialManager.setup(
+            provider: adManager.makeFullscreenProvider(delegate: interstitialManager),
+            askBeforePresent: adManager.askBeforePresentInterstitial,
+            usageCounter: adManager.interstitialUsageCounter
+        )
     }
 }
 
