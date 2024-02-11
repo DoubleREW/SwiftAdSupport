@@ -35,17 +35,16 @@ public struct AdInterstitialContext : ViewModifier {
                 AdInterstitialViewControllerRepresentable()
                     .frame(width: .zero, height: .zero)
             }
-            .alert("Upgrade plan", isPresented: $interstitialManager.isUpgradePlanAlertPresented) {
+            .alert("Upgrade or watch an ad to continue", isPresented: $interstitialManager.isUpgradePlanAlertPresented) {
+                Button("Discover \(adManager.premiumPlanName) upgrade") {
+                    appUpgradeHandler()
+                }
                 Button("Watch ad") {
                     interstitialManager.presentAd()
-                }
-                Button("Discover PRO upgrade") {
-                    appUpgradeHandler()
                 }
                 Button("Cancel", role: .cancel) {
                     interstitialManager.onDismissAction = nil
                 }
-
             }
             .environment(interstitialManager)
             .environment(\.adsTrigger, { (position, action, completion) in

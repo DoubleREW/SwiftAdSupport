@@ -1,5 +1,46 @@
 {
   "sourceLanguage" : "en",
-  "strings" : {},
+  "strings" : {
+    "Cancel" : {
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annulla"
+          }
+        }
+      }
+    },
+    "Discover %@ upgrade" : {
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scopri l'aggiornamento %@"
+          }
+        }
+      }
+    },
+    "Upgrade or watch an ad to continue" : {
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aggiorna o guarda un annuncio per continuare"
+          }
+        }
+      }
+    },
+    "Watch ad" : {
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guarda un'annuncio"
+          }
+        }
+      }
+    }
+  },
   "version" : "1.0"
 }

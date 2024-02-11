@@ -29,17 +29,20 @@ public class AdManager {
     public private(set) var interstitialUsageCounter: (any UsageCounter)?
     public private(set) var askBeforePresentInterstitial: Bool = true
     public private(set) var isEnabled: Bool = false
+    public private(set) var premiumPlanName: String
 
     public init(
         admobBannerUnitID: String? = nil,
         admobInterstitialUnitID: String? = nil,
         interstitialUsageCounter: (any UsageCounter)? = nil,
-        askBeforePresentInterstitial: Bool = true
+        askBeforePresentInterstitial: Bool = true,
+        premiumPlanName: String = "PRO"
     ) {
         self.admobBannerUnitID = admobBannerUnitID
         self.admobInterstitialUnitID = admobInterstitialUnitID
         self.interstitialUsageCounter = interstitialUsageCounter
         self.askBeforePresentInterstitial = askBeforePresentInterstitial
+        self.premiumPlanName = premiumPlanName
     }
 
     public var canShowBannerAds: Bool {
