@@ -36,7 +36,7 @@ public extension View {
 private struct BannerAdsPreviewView : View {
     var body: some View {
         VStack {
-            Text("AAAA")
+            Text(verbatim: "AAAA")
         }
     }
 }

@@ -45,15 +45,15 @@ public extension View {
     NavigationView {
         List {
             ForEach(0..<20, id: \.self) { i in
-                NavigationLink("Row: \(i)") {
-                    Text("Selection: \(i)")
+                NavigationLink(String("Row: \(i)")) {
+                    Text(verbatim: "Selection: \(i)")
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .navigationTitle("Row \(i)")
+                        .navigationTitle(String("Row \(i)"))
                         .adBannerContainer()
                 }
             }
         }
-        .navigationTitle("My List")
+        .navigationTitle(String("My List"))
         .adBannerContainer()
     }
     .adBannerContext()
@@ -63,14 +63,14 @@ public extension View {
 #Preview("Sheet") {
     NavigationView {
         List {
-            Text("View")
+            Text(verbatim: "View")
         }
         .adBannerContainer()
-        .navigationTitle("My List")
+        .navigationTitle(String("My List"))
         .sheet(isPresented: .constant(true), content: {
             NavigationView {
                 List {
-                    Text("Sheet")
+                    Text(verbatim: "Sheet")
                 }
             }
             .adBannerContainer()
@@ -86,33 +86,33 @@ public extension View {
         NavigationView {
             List {
                 ForEach(0..<20, id: \.self) { i in
-                    NavigationLink("Tab 1 row: \(i)") {
-                        Text("Selection: \(i)")
+                    NavigationLink(String("Tab 1 row: \(i)")) {
+                        Text(verbatim: "Selection: \(i)")
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .navigationTitle("Tab 1 row \(i)")
+                            .navigationTitle(String("Tab 1 row \(i)"))
                             .adBannerContainer()
                     }
                 }
             }
-            .navigationTitle("My List")
+            .navigationTitle(String("My List"))
             .adBannerContainer()
         }
-        .tabItem { Label("Tab 1", image: "gear") }
+        .tabItem { Label(String("Tab 1"), image: "gear") }
         NavigationView {
             List {
                 ForEach(0..<20, id: \.self) { i in
-                    NavigationLink("Tab 2 row: \(i)") {
-                        Text("Selection: \(i)")
+                    NavigationLink(String("Tab 2 row: \(i)")) {
+                        Text(verbatim: "Selection: \(i)")
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .navigationTitle("Tab 2 Row \(i)")
+                            .navigationTitle(String("Tab 2 Row \(i)"))
                             .adBannerContainer()
                     }
                 }
             }
-            .navigationTitle("My List")
+            .navigationTitle(String("My List"))
             .adBannerContainer()
         }
-        .tabItem { Label("Tab 2", image: "gear") }
+        .tabItem { Label(String("Tab 2"), image: "gear") }
     }
     .adBannerContext()
     .environment(AdManager.testManager)

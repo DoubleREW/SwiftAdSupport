@@ -111,15 +111,15 @@ private struct InterstitialAdsPreviewView : View {
 
     var body: some View {
         VStack {
-            Text("Content")
-            Button("Show ad before action") {
+            Text(verbatim: "Content")
+            Button(String("Show ad before action")) {
                 adsTrigger(.beforeAction, {
                     print("Azione")
                 }, {
                     print("Completato")
                 })
             }
-            Button("Show ad after action") {
+            Button(String("Show ad after action")) {
                 adsTrigger(.afterAction, {
                     print("Azione")
                 }, {
