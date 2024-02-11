@@ -35,14 +35,14 @@ public struct AdInterstitialContext : ViewModifier {
                 AdInterstitialViewControllerRepresentable()
                     .frame(width: .zero, height: .zero)
             }
-            .alert("Upgrade or watch an ad to continue", isPresented: $interstitialManager.isUpgradePlanAlertPresented) {
-                Button("Discover \(adManager.premiumPlanName) upgrade") {
+            .alert(Text("Upgrade or watch an ad to continue", bundle: .module), isPresented: $interstitialManager.isUpgradePlanAlertPresented) {
+                Button(String(localized: "Discover \(adManager.premiumPlanName) upgrade", bundle: .module)) {
                     appUpgradeHandler()
                 }
-                Button("Watch ad") {
+                Button(String(localized: "Watch ad", bundle: .module)) {
                     interstitialManager.presentAd()
                 }
-                Button("Cancel", role: .cancel) {
+                Button(String(localized: "Cancel", bundle: .module), role: .cancel) {
                     interstitialManager.onDismissAction = nil
                 }
             }
