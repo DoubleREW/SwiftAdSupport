@@ -6,7 +6,9 @@
 //
 
 import Foundation
+import UIKit
 import GoogleMobileAds
+import UserMessagingPlatform
 
 @Observable
 public class AdManager {
@@ -30,6 +32,11 @@ public class AdManager {
     public private(set) var askBeforePresentInterstitial: Bool = true
     public private(set) var isEnabled: Bool = false
     public private(set) var premiumPlanName: String
+    public var testDeviceIdentifiers: [String]?
+    private var isMobileAdsStartCalled = false
+    public var isPrivacyOptionsRequired: Bool {
+      return UMPConsentInformation.sharedInstance.privacyOptionsRequirementStatus == .required
+    }
 
     public init(
         admobBannerUnitID: String? = nil,
@@ -49,14 +56,43 @@ public class AdManager {
         isEnabled && admobBannerUnitID != nil
     }
 
-    public func enable() {
-        GADMobileAds.sharedInstance().start()
+    private var foregroundWindow: UIWindow? {
+        let windowScenes = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+        let activeScene = windowScenes
+            .filter { $0.activationState == .foregroundActive }
+        let firstActiveScene = activeScene.first
+        let keyWindow = firstActiveScene?.keyWindow
 
-        isEnabled = true
+        return keyWindow
+    }
+
+    public func enable() {
+        self.askConsents { [weak self] in
+            guard let self else { return }
+
+            GADMobileAds.sharedInstance().start()
+            GADMobileAds.sharedInstance().requestConfiguration.testDeviceIdentifiers = self.testDeviceIdentifiers
+
+            self.isEnabled = true
+        }
     }
 
     public func disable() {
         isEnabled = false
+    }
+
+    @discardableResult
+    public func presentPrivacyOptionsForm() -> Bool {
+        guard let rootVC = foregroundWindow?.rootViewController else { return false }
+
+        UMPConsentForm.presentPrivacyOptionsForm(from: rootVC) { [weak self] formError in
+            guard let formError, self != nil else { return }
+
+            print("Present privacy options form error: \(formError.localizedDescription)")
+        }
+
+        return true
     }
 
     func makeBannerProvider(delegate: any AdBannerProviderDelegate) -> (any AdBannerProvider)? {
@@ -79,5 +115,48 @@ public class AdManager {
         provider.delegate = delegate
 
         return provider
+    }
+
+    private func askConsents(setupAdsCallback: @escaping () -> Void) {
+        let setupAdsCallbackIfNeeded = { [weak self] in
+            DispatchQueue.main.async {
+                guard let self, !self.isMobileAdsStartCalled else { return }
+
+                self.isMobileAdsStartCalled = true
+
+                setupAdsCallback()
+            }
+        }
+
+        UMPConsentInformation.sharedInstance.requestConsentInfoUpdate(with: nil) { [weak self] requestConsentError in
+            guard self != nil else { return }
+            guard let rootVC = self?.foregroundWindow?.rootViewController else { return }
+
+            if let consentError = requestConsentError {
+                // Consent gathering failed.
+                return print("Error: \(consentError.localizedDescription)")
+            }
+
+            UMPConsentForm.loadAndPresentIfRequired(from: rootVC) { [weak self] loadAndPresentError in
+                guard self != nil else { return }
+
+                if let consentError = loadAndPresentError {
+                    // Consent gathering failed.
+                    return print("Error: \(consentError.localizedDescription)")
+                }
+
+                // Consent has been gathered.
+                if UMPConsentInformation.sharedInstance.canRequestAds {
+                    setupAdsCallbackIfNeeded()
+                }
+            }
+        }
+
+        // Check if you can initialize the Google Mobile Ads SDK in parallel
+        // while checking for new consent information. Consent obtained in
+        // the previous session can be used to request ads.
+        if UMPConsentInformation.sharedInstance.canRequestAds {
+            setupAdsCallbackIfNeeded()
+        }
     }
 }
