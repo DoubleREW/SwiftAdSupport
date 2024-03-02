@@ -67,6 +67,16 @@ public class AdManager {
         return keyWindow
     }
 
+    private func topMostViewController() -> UIViewController? {
+        guard let rootVC = foregroundWindow?.rootViewController else { return nil }
+        var topMostVC: UIViewController = rootVC
+        while topMostVC.presentedViewController != nil {
+            topMostVC = topMostVC.presentedViewController!
+        }
+
+        return topMostVC
+    }
+
     public func enable() {
         self.askConsents { [weak self] in
             guard let self else { return }
@@ -84,9 +94,9 @@ public class AdManager {
 
     @discardableResult
     public func presentPrivacyOptionsForm() -> Bool {
-        guard let rootVC = foregroundWindow?.rootViewController else { return false }
+        guard let topMostVC = topMostViewController() else { return false }
 
-        UMPConsentForm.presentPrivacyOptionsForm(from: rootVC) { [weak self] formError in
+        UMPConsentForm.presentPrivacyOptionsForm(from: topMostVC) { [weak self] formError in
             guard let formError, self != nil else { return }
 
             print("Present privacy options form error: \(formError.localizedDescription)")
@@ -130,14 +140,14 @@ public class AdManager {
 
         UMPConsentInformation.sharedInstance.requestConsentInfoUpdate(with: nil) { [weak self] requestConsentError in
             guard self != nil else { return }
-            guard let rootVC = self?.foregroundWindow?.rootViewController else { return }
+            guard let topMostVC = self?.topMostViewController() else { return }
 
             if let consentError = requestConsentError {
                 // Consent gathering failed.
                 return print("Error: \(consentError.localizedDescription)")
             }
 
-            UMPConsentForm.loadAndPresentIfRequired(from: rootVC) { [weak self] loadAndPresentError in
+            UMPConsentForm.loadAndPresentIfRequired(from: topMostVC) { [weak self] loadAndPresentError in
                 guard self != nil else { return }
 
                 if let consentError = loadAndPresentError {
