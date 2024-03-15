@@ -14,7 +14,7 @@ let package = Package(
             targets: ["AdsHelper"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/googleads/swift-package-manager-google-mobile-ads.git", from: "10.14.0")
+        .package(url: "https://github.com/googleads/swift-package-manager-google-mobile-ads.git", from: "11.2.0")
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
