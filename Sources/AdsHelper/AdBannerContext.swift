@@ -40,7 +40,6 @@ private struct BannerAdsPreviewView : View {
         }
     }
 }
-#endif
 
 #Preview {
     NavigationView {
@@ -49,3 +48,4 @@ private struct BannerAdsPreviewView : View {
     }
     .environment(AdManager.testManager)
 }
+#endif

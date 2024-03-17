@@ -41,6 +41,7 @@ public extension View {
     }
 }
 
+#if DEBUG
 #Preview("Stack") {
     NavigationView {
         List {
@@ -117,3 +118,4 @@ public extension View {
     .adBannerContext()
     .environment(AdManager.testManager)
 }
+#endif

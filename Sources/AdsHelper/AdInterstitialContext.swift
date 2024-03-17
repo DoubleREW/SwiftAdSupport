@@ -128,7 +128,6 @@ private struct InterstitialAdsPreviewView : View {
         }
     }
 }
-#endif
 
 #Preview {
     NavigationView {
@@ -140,3 +139,4 @@ private struct InterstitialAdsPreviewView : View {
     }
     .environment(AdManager.testManager)
 }
+#endif
