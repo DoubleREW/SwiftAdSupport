@@ -17,10 +17,10 @@ public class AdManager {
     #if DEBUG
     public static let testManager: AdManager = {
         let manager = AdManager(
-            admobBannerUnitID: "ca-app-pub-3940256099942544/2934735716",
-            admobInterstitialUnitID: "ca-app-pub-3940256099942544/5135589807")
+            admobBannerUnitID: "ca-app-pub-3940256099942544/2435281174",
+            admobInterstitialUnitID: "ca-app-pub-3940256099942544/4411468910")
 
-        manager.enable()
+        manager.isEnabled = true
 
         return manager
     }()

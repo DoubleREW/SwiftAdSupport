@@ -7,8 +7,11 @@
 
 import SwiftUI
 import GoogleMobileAds
+import UIFoundation
 
 struct AdBannerContainer: ViewModifier {
+
+    private var isNavigationView: Bool = false
 
     @Environment(AdManager.self)
     private var adManager
@@ -17,11 +20,16 @@ struct AdBannerContainer: ViewModifier {
     @State
     private var bannerSize: CGSize = .zero
 
+    init(isNavigationView: Bool = false) {
+        self.isNavigationView = isNavigationView
+    }
+
     @ViewBuilder
     func body(content: Self.Content) -> some View {
         if adManager.canShowBannerAds {
             content
-                .safeAreaPadding(isBannerLoaded ? .bottom : [], bannerSize.height)
+                .safeAreaPadding((isBannerLoaded && !isNavigationView) ? .bottom : [], bannerSize.height)
+                .addAdditionalBottomPadding((isBannerLoaded && isNavigationView) ? bannerSize.height : 0)
                 .overlay(
                     AdBannerView(bannerLoaded: $isBannerLoaded, bannerSize: $bannerSize)
                         .background(Material.regular)
@@ -39,11 +47,15 @@ public extension View {
     func adBannerContainer() -> some View {
         return self.modifier(AdBannerContainer())
     }
+
+    func adBannerNavContainer() -> some View {
+        return self.modifier(AdBannerContainer(isNavigationView: true))
+    }
 }
 
 #if DEBUG
 #Preview("Stack") {
-    NavigationView {
+    NavigationStack {
         List {
             ForEach(0..<20, id: \.self) { i in
                 NavigationLink(String("Row: \(i)")) {
@@ -62,7 +74,7 @@ public extension View {
 }
 
 #Preview("Sheet") {
-    NavigationView {
+    NavigationStack {
         List {
             Text(verbatim: "View")
         }
@@ -84,35 +96,38 @@ public extension View {
 
 #Preview("Tabs") {
     TabView {
-        NavigationView {
+        NavigationStack {
             List {
                 ForEach(0..<20, id: \.self) { i in
                     NavigationLink(String("Tab 1 row: \(i)")) {
                         Text(verbatim: "Selection: \(i)")
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                             .navigationTitle(String("Tab 1 row \(i)"))
-                            .adBannerContainer()
+                            .additionalBottomPadding()
                     }
                 }
             }
+            .additionalBottomPadding()
             .navigationTitle(String("My List"))
-            .adBannerContainer()
         }
+        .adBannerNavContainer()
         .tabItem { Label(String("Tab 1"), image: "gear") }
-        NavigationView {
+        
+        NavigationStack {
             List {
                 ForEach(0..<20, id: \.self) { i in
                     NavigationLink(String("Tab 2 row: \(i)")) {
                         Text(verbatim: "Selection: \(i)")
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .additionalBottomPadding()
                             .navigationTitle(String("Tab 2 Row \(i)"))
-                            .adBannerContainer()
                     }
                 }
             }
+            .additionalBottomPadding()
             .navigationTitle(String("My List"))
-            .adBannerContainer()
         }
+        .adBannerNavContainer()
         .tabItem { Label(String("Tab 2"), image: "gear") }
     }
     .adBannerContext()

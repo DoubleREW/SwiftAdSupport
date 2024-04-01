@@ -17,6 +17,15 @@
         "revision" : "cfe8b2ae16b9bc81f4cdf1d1a12a01a452489c32",
         "version" : "2.3.0"
       }
+    },
+    {
+      "identity" : "uifoundation",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/DoubleREW/UIFoundation.git",
+      "state" : {
+        "revision" : "6d93c9ac39f0470c63650965d05f5ab8f73a12dd",
+        "version" : "1.3.2"
+      }
     }
   ],
   "version" : 2
